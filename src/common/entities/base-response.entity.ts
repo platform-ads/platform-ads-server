@@ -19,9 +19,15 @@ export class BaseResponseEntity<T> {
   @Expose()
   timestamp: string;
 
-  constructor(partial: Partial<BaseResponseEntity<T>>) {
+  constructor(partial: Partial<BaseResponseEntity<T>> = {}) {
     Object.assign(this, partial);
-    this.success = true;
-    this.timestamp = new Date().toISOString();
+
+    if (typeof this.success !== 'boolean') {
+      this.success = true;
+    }
+
+    if (!this.timestamp) {
+      this.timestamp = new Date().toISOString();
+    }
   }
 }
