@@ -13,4 +13,10 @@ export class RoleController {
   getRoles(@Query() paginationQuery: PaginationQueryDto) {
     return this.roleService.findAll(paginationQuery);
   }
+
+  @Get('by-name')
+  @ResponseMessage('Role retrieved successfully')
+  getRoleByName(@Query('name') name: string) {
+    return this.roleService.findByName(name);
+  }
 }

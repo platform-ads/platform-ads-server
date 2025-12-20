@@ -1,15 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Model } from 'mongoose';
+import { Model } from 'mongoose';
 
-import { ROLE_MODEL } from './constants/role.constants';
 import { RoleDocument } from './schema/role.schema';
-import { paginateQuery } from '../../common/utils/pagination.util';
-import type { PaginationOptions } from '../../common/http/response.types';
+import { PaginationOptions } from 'src/common/http';
+import { paginateQuery } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class RoleService {
   constructor(
-    @Inject(ROLE_MODEL)
+    @Inject('ROLE_MODEL')
     private readonly roleModel: Model<RoleDocument>,
   ) {}
 
@@ -17,5 +16,9 @@ export class RoleService {
     return paginateQuery(this.roleModel, {}, paginationOptions, {
       sort: { createdAt: -1 },
     });
+  }
+
+  async findByName(name: string): Promise<RoleDocument | null> {
+    return this.roleModel.findOne({ name }).exec();
   }
 }
