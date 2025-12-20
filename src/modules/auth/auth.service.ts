@@ -1,17 +1,29 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { plainToInstance } from 'class-transformer';
 
 import { UserService } from '../users/user.service';
 import { RoleService } from '../roles/role.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { LoginResponseEntity } from './entities/auth.entity';
 
 @Injectable()
 export class AuthService {
+  private readonly refreshTokenOptions: JwtSignOptions;
+
   constructor(
     private readonly userService: UserService,
     private readonly roleService: RoleService,
-  ) {}
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {
+    this.refreshTokenOptions = {
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+    } as JwtSignOptions;
+  }
 
   comparePasswords(
     plainPassword: string,
@@ -20,7 +32,7 @@ export class AuthService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async validateUser(loginDto: LoginDto) {
+  async signIn(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
     const userDoc = await this.userService.findByEmail(email);
@@ -38,10 +50,29 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.userService.findByEmailAsEntity(email);
+    const payload = { sub: userDoc._id.toString(), email: userDoc.email };
+
+    const accessToken = await this.jwtService.signAsync({
+      ...payload,
+      type: 'access',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(
+      {
+        ...payload,
+        type: 'refresh',
+      },
+      this.refreshTokenOptions,
+    );
+
+    return plainToInstance(
+      LoginResponseEntity,
+      { accessToken, refreshToken },
+      { excludeExtraneousValues: true },
+    );
   }
 
-  async newUserRegister(registerDto: RegisterDto) {
+  async signUp(registerDto: RegisterDto) {
     const { email, password, phoneNumber } = registerDto;
 
     const userName = email.split('@')[0];
@@ -85,5 +116,51 @@ export class AuthService {
     }
 
     return newUser;
+  }
+
+  async refreshToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        email: string;
+        type: string;
+      }>(token);
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      const userDoc = await this.userService.findByEmail(payload.email);
+
+      if (!userDoc) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const newPayload = {
+        sub: userDoc._id.toString(),
+        email: userDoc.email,
+      };
+
+      const accessToken = await this.jwtService.signAsync({
+        ...newPayload,
+        type: 'access',
+      });
+
+      const refreshToken = await this.jwtService.signAsync(
+        {
+          ...newPayload,
+          type: 'refresh',
+        },
+        this.refreshTokenOptions,
+      );
+
+      return plainToInstance(
+        LoginResponseEntity,
+        { accessToken, refreshToken },
+        { excludeExtraneousValues: true },
+      );
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 }
