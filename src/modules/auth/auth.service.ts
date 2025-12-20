@@ -124,7 +124,9 @@ export class AuthService {
       sub: string;
       email: string;
       type: string;
-    }>(token);
+    }>(token, {
+      secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+    });
 
     if (payload.type !== 'refresh') {
       throw new UnauthorizedException('Invalid token type');
@@ -156,7 +158,7 @@ export class AuthService {
 
     return plainToInstance(
       LoginResponseEntity,
-      { user: userDoc, accessToken, refreshToken },
+      { accessToken, refreshToken },
       { excludeExtraneousValues: true },
     );
   }
