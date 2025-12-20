@@ -33,11 +33,11 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(app.get(ConfigService).get<number>('PORT') || 3000);
+  await app.listen(app.get(ConfigService).get('PORT') || 3000);
 
   console.log(
-    'App running at http://localhost:' +
-      app.get(ConfigService).get<number>('PORT') || 3000,
+    'App running at http://localhost:' + app.get(ConfigService).get('PORT') ||
+      3000,
   );
 }
 
