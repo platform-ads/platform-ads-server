@@ -30,9 +30,8 @@ export class ResponseInterceptor extends ClassSerializerInterceptor {
       [context.getHandler(), context.getClass()],
     );
 
-    // Nếu skip transform, chỉ áp dụng serialization không wrap response
     if (skipTransform) {
-      return super.intercept(context, next);
+      return next.handle();
     }
 
     const request = context.switchToHttp().getRequest<Request>();

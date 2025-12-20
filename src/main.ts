@@ -39,6 +39,18 @@ async function bootstrap() {
     'App running at http://localhost:' + app.get(ConfigService).get('PORT') ||
       3000,
   );
+
+  const logMemoryUsage = () => {
+    const usage = process.memoryUsage();
+    console.log('Memory Usage:', {
+      rss: `${Math.round(usage.rss / 1024 / 1024)} MB`,
+      heapTotal: `${Math.round(usage.heapTotal / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(usage.heapUsed / 1024 / 1024)} MB`,
+      totalMemory: `${Math.round((usage.rss + usage.heapTotal + usage.heapUsed) / 1024 / 1024)} MB`,
+    });
+  };
+
+  logMemoryUsage();
 }
 
 bootstrap().catch((err) => {
