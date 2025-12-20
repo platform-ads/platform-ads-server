@@ -24,7 +24,7 @@ export type UserDocument = mongoose.Document & {
   email: string;
   phoneNumber: string;
   password: string;
-  roles: Array<{ _id: string; name: string }>;
+  roles: Array<{ _id: mongoose.Types.ObjectId; name: string }>;
   avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;

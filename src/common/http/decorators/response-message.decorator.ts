@@ -13,7 +13,7 @@ export const ResponseMessage = (message: string) =>
   SetMetadata(RESPONSE_MESSAGE_KEY, message);
 
 /**
- * Skip response transformation (trả về raw data)
+ * Skip response transformation (trả về raw data, nhưng vẫn áp dụng serialization)
  * @example
  * @SkipTransform()
  * @Get('file')

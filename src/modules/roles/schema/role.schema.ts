@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 export const RoleSchema = new mongoose.Schema(
   {
@@ -10,6 +10,7 @@ export const RoleSchema = new mongoose.Schema(
 );
 
 export type RoleDocument = Document & {
+  _id: mongoose.Types.ObjectId;
   name: 'admin' | 'user';
   createdAt: Date;
   updatedAt: Date;

@@ -16,11 +16,13 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
       transformOptions: {
         enableImplicitConversion: true,
+        excludeExtraneousValues: true,
       },
     }),
   );
 
   const reflector = app.get(Reflector);
+
   app.useGlobalInterceptors(new ResponseInterceptor(reflector));
   app.useGlobalFilters(new HttpExceptionFilter());
 
