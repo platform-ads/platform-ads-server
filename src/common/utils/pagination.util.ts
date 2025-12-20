@@ -49,17 +49,29 @@ export async function paginateQuery<T>(
   filter: QueryFilter<T>,
   paginationOptions: PaginationOptions,
   queryOptions: QueryOptions = {},
+  populate?: string | string[] | { path: string; select?: string }[],
 ): Promise<PaginatedData<T>> {
   const { page, limit } = normalizePaginationOptions(paginationOptions);
   const skip = calculateSkip(page, limit);
 
+  let query = model.find(filter, null, queryOptions).skip(skip).limit(limit);
+
+  if (populate) {
+    if (Array.isArray(populate)) {
+      for (const p of populate) {
+        if (typeof p === 'string') {
+          query = query.populate(p);
+        } else {
+          query = query.populate(p as mongoose.PopulateOptions);
+        }
+      }
+    } else {
+      query = query.populate(populate);
+    }
+  }
+
   const [items, totalItems] = await Promise.all([
-    model
-      .find(filter, null, queryOptions)
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec(),
+    query.lean().exec(),
     model.countDocuments(filter).exec(),
   ]);
 

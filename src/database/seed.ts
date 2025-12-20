@@ -1,13 +1,18 @@
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import * as mongoose from 'mongoose';
-import * as dotenv from 'dotenv';
 
-import { seedRoles } from './seeds';
-
-dotenv.config();
+import { AppModule } from 'src/app.module';
+import { seedRoles, seedUsers } from './seeds';
 
 async function runSeeds() {
-  const mongoUri = process.env.MONGODB_URI;
-  const mongoDbName = process.env.MONGODB_DB_NAME;
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: false,
+  });
+  const configService = app.get(ConfigService);
+
+  const mongoUri = configService.get<string>('MONGODB_URI');
+  const mongoDbName = configService.get<string>('MONGODB_DB_NAME');
 
   if (!mongoUri) {
     throw new Error('Missing required env var: MONGODB_URI');
@@ -19,16 +24,18 @@ async function runSeeds() {
   try {
     await mongoose.connect(mongoUri, { dbName: mongoDbName });
     await seedRoles(mongoose);
-    console.log('Database seeding completed!');
-  } catch (error) {
-    console.error('Seeding failed:', error);
-    process.exit(1);
+    await seedUsers(mongoose, configService);
   } finally {
     await mongoose.disconnect();
+    await app.close();
   }
 }
 
-runSeeds().catch((err) => {
-  console.error('Error during seeding process:', err);
-  process.exit(1);
-});
+runSeeds()
+  .then(() => {
+    console.log('Database seeding completed!');
+  })
+  .catch((err: unknown) => {
+    console.error('Seeding failed:', err);
+    process.exit(1);
+  });

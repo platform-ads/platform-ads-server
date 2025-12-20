@@ -1,4 +1,4 @@
-import { RoleSchema } from '../../modules/role/schema/role.schema';
+import { RoleSchema } from 'src/modules/roles/schema/role.schema';
 
 export const ROLE_SEED_DATA = [
   {

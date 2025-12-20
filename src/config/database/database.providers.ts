@@ -2,8 +2,9 @@ import * as mongoose from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 
 import { DATABASE_CONNECTION } from './database.constants';
+import type { AppProvider } from 'src/common/utils/providers.util';
 
-export const databaseProviders = [
+export const databaseProviders: AppProvider[] = [
   {
     provide: DATABASE_CONNECTION,
     inject: [ConfigService],
