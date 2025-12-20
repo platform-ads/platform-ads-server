@@ -84,10 +84,4 @@ export class ResponseInterceptor extends ClassSerializerInterceptor {
   /**
    * Override serialize để hỗ trợ nested serialization
    */
-  serialize(
-    response: PlainLiteralObject | Array<PlainLiteralObject>,
-    options: ClassTransformOptions,
-  ): PlainLiteralObject | PlainLiteralObject[] {
-    return super.serialize(response, options);
-  }
 }
