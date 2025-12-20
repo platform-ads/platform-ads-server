@@ -32,7 +32,7 @@ export class UserService {
     });
   }
 
-  async findByid(id: string): Promise<UserEntity | null> {
+  async findById(id: string): Promise<UserEntity | null> {
     const user = await this.userModel.findById(id).exec();
 
     if (!user) {

@@ -4,7 +4,7 @@ import { ClassTransformOptions } from 'class-transformer';
 import { RESPONSE_MESSAGE_KEY, SKIP_TRANSFORM_KEY } from '../response.types';
 
 /**
- * Custom decorator để set message cho response
+ * Custom decorator to set message for response
  * @example
  * @ResponseMessage('User created successfully')
  * @Post()
@@ -14,7 +14,7 @@ export const ResponseMessage = (message: string) =>
   SetMetadata(RESPONSE_MESSAGE_KEY, message);
 
 /**
- * Skip response transformation (trả về raw data, nhưng vẫn áp dụng serialization)
+ * Skip response transformation (returns raw data, but still applies serialization)
  * @example
  * @SkipTransform()
  * @Get('file')
@@ -23,8 +23,8 @@ export const ResponseMessage = (message: string) =>
 export const SkipTransform = () => SetMetadata(SKIP_TRANSFORM_KEY, true);
 
 /**
- * Decorator để định nghĩa entity class cho serialization
- * Sử dụng thay cho việc return entity instance từ controller
+ * Decorator to define entity class for serialization
+ * Use instead of returning entity instance from controller
  * @example
  * @Serialize(UserEntity)
  * @Get()
@@ -35,7 +35,7 @@ export const Serialize = (entity: Type<any>) =>
   SetMetadata(SERIALIZE_KEY, entity);
 
 /**
- * Decorator để custom serialization options
+ * Decorator to customize serialization options
  * @example
  * @SerializeOptions({ excludePrefixes: ['_'] })
  * @Get()

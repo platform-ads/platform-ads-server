@@ -17,6 +17,6 @@ export class UserController {
   @Get('by-id')
   @ResponseMessage('User retrieved successfully')
   getUserById(@Query('id') id: string) {
-    return this.userService.findByid(id);
+    return this.userService.findById(id);
   }
 }

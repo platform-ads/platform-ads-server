@@ -1,5 +1,11 @@
 import { Expose } from 'class-transformer';
-import { IsEmail, IsNotEmpty, MinLength, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  Matches,
+  IsPhoneNumber,
+} from 'class-validator';
 
 export class RegisterDto {
   @Expose()
@@ -18,5 +24,6 @@ export class RegisterDto {
 
   @Expose()
   @IsNotEmpty()
+  @IsPhoneNumber()
   phoneNumber: string;
 }
