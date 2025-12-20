@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createRequire } from 'node:module';
 import * as os from 'node:os';
 import process from 'node:process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 @Injectable()
@@ -29,6 +29,111 @@ export class AppService {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
     return `${hrs}h ${mins}m ${secs}s`;
+  }
+
+  private isInContainer(): boolean {
+    return (
+      existsSync('/.dockerenv') ||
+      existsSync('/proc/1/cgroup') ||
+      process.env.RENDER === 'true' ||
+      Boolean(process.env.RAILWAY_ENVIRONMENT) ||
+      Boolean(process.env.VERCEL) ||
+      Boolean(process.env.HEROKU_APP_NAME) ||
+      Boolean(process.env.KUBERNETES_SERVICE_HOST)
+    );
+  }
+
+  private getContainerCpuInfo(): { model: string; cores: number } | undefined {
+    try {
+      if (existsSync('/sys/fs/cgroup/cpu.max')) {
+        const cpuMax = readFileSync('/sys/fs/cgroup/cpu.max', 'utf8').trim();
+        if (cpuMax !== 'max') {
+          const [quota, period] = cpuMax.split(' ').map(Number);
+          if (quota && period) {
+            const cores = quota / period;
+            return {
+              model: 'Container CPU',
+              cores: Math.round(cores * 10) / 10,
+            };
+          }
+        }
+      }
+
+      if (
+        existsSync('/sys/fs/cgroup/cpu/cpu.cfs_quota_us') &&
+        existsSync('/sys/fs/cgroup/cpu/cpu.cfs_period_us')
+      ) {
+        const quota = parseInt(
+          readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_quota_us', 'utf8').trim(),
+        );
+        const period = parseInt(
+          readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_period_us', 'utf8').trim(),
+        );
+
+        if (quota > 0 && period > 0) {
+          const cores = quota / period;
+          return {
+            model: 'Container CPU',
+            cores: Math.round(cores * 10) / 10,
+          };
+        }
+      }
+
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private getContainerMemoryInfo():
+    | { total: string; free: string }
+    | undefined {
+    try {
+      if (existsSync('/sys/fs/cgroup/memory.max')) {
+        const memMax = readFileSync('/sys/fs/cgroup/memory.max', 'utf8').trim();
+        if (memMax !== 'max') {
+          const maxBytes = parseInt(memMax);
+          const usage = existsSync('/sys/fs/cgroup/memory.current')
+            ? parseInt(
+                readFileSync('/sys/fs/cgroup/memory.current', 'utf8').trim(),
+              )
+            : 0;
+
+          return {
+            total: this.formatBytes(maxBytes),
+            free: this.formatBytes(maxBytes - usage),
+          };
+        }
+      }
+
+      if (existsSync('/sys/fs/cgroup/memory/memory.limit_in_bytes')) {
+        const limit = parseInt(
+          readFileSync(
+            '/sys/fs/cgroup/memory/memory.limit_in_bytes',
+            'utf8',
+          ).trim(),
+        );
+        const usage = existsSync('/sys/fs/cgroup/memory/memory.usage_in_bytes')
+          ? parseInt(
+              readFileSync(
+                '/sys/fs/cgroup/memory/memory.usage_in_bytes',
+                'utf8',
+              ).trim(),
+            )
+          : 0;
+
+        if (limit < Number.MAX_SAFE_INTEGER) {
+          return {
+            total: this.formatBytes(limit),
+            free: this.formatBytes(limit - usage),
+          };
+        }
+      }
+
+      return undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private safeGetPackageVersion(packageName: string): string | null {
@@ -66,11 +171,27 @@ export class AppService {
   getSystemInfo() {
     const cpuInfo = os.cpus();
     const appPkg = this.safeReadAppPackageJson();
+    const inContainer = this.isInContainer();
+
+    const containerCpu = inContainer ? this.getContainerCpuInfo() : undefined;
+    const containerMemory = inContainer
+      ? this.getContainerMemoryInfo()
+      : undefined;
+
+    const cpu = containerCpu ?? {
+      model: cpuInfo[0]?.model ?? undefined,
+      cores: cpuInfo.length > 0 ? cpuInfo.length : undefined,
+    };
+
+    const memory = containerMemory ?? {
+      total: os.totalmem() ? this.formatBytes(os.totalmem()) : undefined,
+      free: os.freemem() ? this.formatBytes(os.freemem()) : undefined,
+    };
 
     return {
       app: {
-        name: appPkg?.name ?? null,
-        version: appPkg?.version ?? null,
+        name: appPkg?.name ?? undefined,
+        version: appPkg?.version ?? undefined,
       },
       framework: {
         name: 'nestjs',
@@ -82,40 +203,47 @@ export class AppService {
           ),
         },
       },
-      cpu: {
-        model: cpuInfo[0]?.model ?? 'unknown',
-        cores: cpuInfo.length,
-      },
-      memory: {
-        total: this.formatBytes(os.totalmem()),
-        free: this.formatBytes(os.freemem()),
-      },
+      cpu,
+      memory,
       os: {
-        type: os.type(),
-        platform: os.platform(),
-        release: os.release(),
-        arch: os.arch(),
-        hostname: os.hostname(),
+        type: os.type() || undefined,
+        platform: os.platform() || undefined,
+        release: os.release() || undefined,
+        arch: os.arch() || undefined,
+        hostname: os.hostname() || undefined,
+        containerized: inContainer,
       },
       node: {
-        version: process.version,
+        version: process.version || undefined,
         env: {
-          nodeEnv: process.env.NODE_ENV ?? null,
-          port: process.env.PORT ?? null,
+          nodeEnv: process.env.NODE_ENV || undefined,
+          port: process.env.PORT || undefined,
         },
       },
       process: {
         memoryUsage: {
-          rss: this.formatBytes(process.memoryUsage().rss),
-          heapTotal: this.formatBytes(process.memoryUsage().heapTotal),
-          heapUsed: this.formatBytes(process.memoryUsage().heapUsed),
-          external: this.formatBytes(process.memoryUsage().external),
-          arrayBuffers: this.formatBytes(process.memoryUsage().arrayBuffers),
+          rss: process.memoryUsage().rss
+            ? this.formatBytes(process.memoryUsage().rss)
+            : undefined,
+          heapTotal: process.memoryUsage().heapTotal
+            ? this.formatBytes(process.memoryUsage().heapTotal)
+            : undefined,
+          heapUsed: process.memoryUsage().heapUsed
+            ? this.formatBytes(process.memoryUsage().heapUsed)
+            : undefined,
+          external: process.memoryUsage().external
+            ? this.formatBytes(process.memoryUsage().external)
+            : undefined,
+          arrayBuffers: process.memoryUsage().arrayBuffers
+            ? this.formatBytes(process.memoryUsage().arrayBuffers)
+            : undefined,
         },
       },
       uptime: {
-        system: this.formatUptime(os.uptime()),
-        process: this.formatUptime(process.uptime()),
+        system: os.uptime() ? this.formatUptime(os.uptime()) : undefined,
+        process: process.uptime()
+          ? this.formatUptime(process.uptime())
+          : undefined,
       },
     };
   }
