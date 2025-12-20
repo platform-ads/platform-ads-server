@@ -156,7 +156,7 @@ export class AuthService {
 
       return plainToInstance(
         LoginResponseEntity,
-        { accessToken, refreshToken },
+        { user: userDoc, accessToken, refreshToken },
         { excludeExtraneousValues: true },
       );
     } catch {
