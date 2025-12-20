@@ -21,7 +21,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {
     this.refreshTokenOptions = {
-      expiresIn: this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN'),
+      expiresIn: this.configService.getOrThrow<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+      ),
     } as JwtSignOptions;
   }
 

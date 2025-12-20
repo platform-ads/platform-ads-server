@@ -3,7 +3,6 @@ import {
   ClassSerializerInterceptor,
   ExecutionContext,
   Injectable,
-  PlainLiteralObject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, map } from 'rxjs';
@@ -52,18 +51,15 @@ export class ResponseInterceptor extends ClassSerializerInterceptor {
 
     return next.handle().pipe(
       map((data) => {
-        // Wrap data trong BaseResponseEntity
         const statusCode = response.statusCode || 200;
         const wrappedResponse = new BaseResponseEntity({
           success: true,
           statusCode,
           message: customMessage || this.getDefaultMessage(request.method),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data,
           timestamp: new Date().toISOString(),
         });
 
-        // Áp dụng serialization
         return this.serialize(wrappedResponse, options);
       }),
     );
@@ -80,8 +76,4 @@ export class ResponseInterceptor extends ClassSerializerInterceptor {
 
     return messages[method] || 'Request processed successfully';
   }
-
-  /**
-   * Override serialize để hỗ trợ nested serialization
-   */
 }
