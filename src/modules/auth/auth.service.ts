@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
@@ -21,10 +25,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {
     this.refreshTokenOptions = {
-      expiresIn: this.configService.getOrThrow<string>(
-        'JWT_REFRESH_EXPIRES_IN',
-      ),
-    } as JwtSignOptions;
+      expiresIn: this.configService.getOrThrow('JWT_REFRESH_EXPIRES_IN'),
+      secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+    };
   }
 
   comparePasswords(
@@ -92,15 +95,15 @@ export class AuthService {
     ]);
 
     if (emailExists) {
-      throw new UnauthorizedException('Email already in use');
+      throw new ConflictException('Email already in use');
     }
 
     if (usernameExists) {
-      throw new UnauthorizedException('Username already in use');
+      throw new ConflictException('Username already in use');
     }
 
     if (phoneExists) {
-      throw new UnauthorizedException('Phone number already in use');
+      throw new ConflictException('Phone number already in use');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -113,56 +116,48 @@ export class AuthService {
       phoneNumber,
     });
 
-    if (!newUser) {
-      throw new UnauthorizedException('Registration failed');
-    }
-
     return newUser;
   }
 
   async refreshToken(token: string) {
-    try {
-      const payload = await this.jwtService.verifyAsync<{
-        sub: string;
-        email: string;
-        type: string;
-      }>(token);
+    const payload = await this.jwtService.verifyAsync<{
+      sub: string;
+      email: string;
+      type: string;
+    }>(token);
 
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      const userDoc = await this.userService.findByEmail(payload.email);
-
-      if (!userDoc) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      const newPayload = {
-        sub: userDoc._id.toString(),
-        email: userDoc.email,
-      };
-
-      const accessToken = await this.jwtService.signAsync({
-        ...newPayload,
-        type: 'access',
-      });
-
-      const refreshToken = await this.jwtService.signAsync(
-        {
-          ...newPayload,
-          type: 'refresh',
-        },
-        this.refreshTokenOptions,
-      );
-
-      return plainToInstance(
-        LoginResponseEntity,
-        { user: userDoc, accessToken, refreshToken },
-        { excludeExtraneousValues: true },
-      );
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
     }
+
+    const userDoc = await this.userService.findByEmail(payload.email);
+
+    if (!userDoc) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const newPayload = {
+      sub: userDoc._id.toString(),
+      email: userDoc.email,
+    };
+
+    const accessToken = await this.jwtService.signAsync({
+      ...newPayload,
+      type: 'access',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(
+      {
+        ...newPayload,
+        type: 'refresh',
+      },
+      this.refreshTokenOptions,
+    );
+
+    return plainToInstance(
+      LoginResponseEntity,
+      { user: userDoc, accessToken, refreshToken },
+      { excludeExtraneousValues: true },
+    );
   }
 }

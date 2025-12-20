@@ -1,4 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { IsMongoId } from 'class-validator';
 import { ResponseMessage } from 'src/common/http';
 
 import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
@@ -15,6 +16,7 @@ export class UserController {
   }
 
   @Get('by-id')
+  @IsMongoId()
   @ResponseMessage('User retrieved successfully')
   getUserById(@Query('id') id: string) {
     return this.userService.findById(id);

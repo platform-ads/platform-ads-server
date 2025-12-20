@@ -24,6 +24,6 @@ export class RegisterDto {
 
   @Expose()
   @IsNotEmpty()
-  @IsPhoneNumber()
+  @IsPhoneNumber('VN')
   phoneNumber: string;
 }

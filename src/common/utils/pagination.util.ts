@@ -58,10 +58,13 @@ export async function paginateQuery<T>(
 
   if (populate) {
     if (Array.isArray(populate)) {
-      populate.forEach((p) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        query = query.populate(p);
-      });
+      for (const p of populate) {
+        if (typeof p === 'string') {
+          query = query.populate(p);
+        } else {
+          query = query.populate(p as mongoose.PopulateOptions);
+        }
+      }
     } else {
       query = query.populate(populate);
     }
