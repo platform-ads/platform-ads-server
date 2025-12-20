@@ -1,7 +1,7 @@
 import { Exclude, Expose } from 'class-transformer';
 
 /**
- * Base response entity cho tất cả API responses
+ * Base response entity for all API responses
  */
 export class BaseResponseEntity<T> {
   @Expose()
