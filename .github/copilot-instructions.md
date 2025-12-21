@@ -1,9 +1,11 @@
 # Platform Ads Server - Copilot Instructions
 
 ## Project Overview
+
 This is a **NestJS-based RESTful API** platform for advertising management, built with **TypeScript**, **MongoDB** (via Mongoose), and following modern backend development practices.
 
 ## Tech Stack
+
 - **Framework**: NestJS 11.x
 - **Runtime**: Node.js with TypeScript 5.7
 - **Database**: MongoDB with Mongoose ODM
@@ -15,6 +17,7 @@ This is a **NestJS-based RESTful API** platform for advertising management, buil
 ## Architecture & Code Organization
 
 ### 1. Project Structure
+
 ```
 src/
 ├── main.ts                     # Application bootstrap
@@ -36,7 +39,9 @@ src/
 ```
 
 ### 2. Module Structure Pattern
+
 Each feature module follows this consistent structure:
+
 ```
 module-name/
 ├── module-name.module.ts      # Module definition
@@ -51,19 +56,24 @@ module-name/
 ## Coding Standards & Conventions
 
 ### 1. Database Layer
+
 - **ORM**: Use Mongoose with custom schemas
 - **Schema Pattern**: Define schemas in `schema/` directory using raw Mongoose schemas
 - **Typing**: Create TypeScript types for documents extending mongoose.Document
 - **Providers**: Use custom providers pattern for model injection
 
 **Example Schema Structure:**
+
 ```typescript
 // schema/user.schema.ts
-export const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  // ... other fields
-}, { versionKey: false });
+export const UserSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    // ... other fields
+  },
+  { versionKey: false },
+);
 
 export type UserDocument = mongoose.Document & {
   username: string;
@@ -73,6 +83,7 @@ export type UserDocument = mongoose.Document & {
 ```
 
 ### 2. Entity Layer (Response DTOs)
+
 - **Location**: Place in `entities/` directory
 - **Naming**: End with `Entity` suffix (e.g., `UserEntity`)
 - **Serialization**: Use `class-transformer` decorators extensively
@@ -83,6 +94,7 @@ export type UserDocument = mongoose.Document & {
   - Use `@Type()` for nested objects
 
 **Example Entity:**
+
 ```typescript
 export class UserEntity {
   @Expose()
@@ -102,6 +114,7 @@ export class UserEntity {
 ```
 
 ### 3. DTO Layer (Request DTOs)
+
 - **Location**: Place in `dto/` directory
 - **Validation**: Use `class-validator` decorators
 - **Transformation**: Use `class-transformer` for automatic type conversion
@@ -111,6 +124,7 @@ export class UserEntity {
   - Include meaningful error messages
 
 **Example DTO:**
+
 ```typescript
 export class LoginDto {
   @Expose()
@@ -122,13 +136,15 @@ export class LoginDto {
   @IsNotEmpty()
   @MinLength(8)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/, {
-    message: 'password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character'
+    message:
+      'password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character',
   })
   password: string;
 }
 ```
 
 ### 4. Service Layer
+
 - **Responsibility**: Handle business logic and data access
 - **Pattern**: Inject models using custom providers
 - **Return Types**: Always return Entity objects from public methods
@@ -136,6 +152,7 @@ export class LoginDto {
 - **Error Handling**: Let NestJS handle exceptions naturally
 
 **Example Service:**
+
 ```typescript
 @Injectable()
 export class UserService {
@@ -147,7 +164,7 @@ export class UserService {
   async findById(id: string): Promise<UserEntity | null> {
     const user = await this.userModel.findById(id).exec();
     if (!user) return null;
-    
+
     return plainToInstance(UserEntity, user.toObject(), {
       excludeExtraneousValues: true,
     });
@@ -156,6 +173,7 @@ export class UserService {
 ```
 
 ### 5. Controller Layer
+
 - **Responsibility**: Handle HTTP requests and responses
 - **Decorators**: Always use `@ResponseMessage()` for success messages
 - **Validation**: Rely on ValidationPipe for automatic DTO validation
@@ -165,6 +183,7 @@ export class UserService {
   - Keep controllers thin - delegate to services
 
 **Example Controller:**
+
 ```typescript
 @Controller('users')
 export class UserController {
@@ -179,6 +198,7 @@ export class UserController {
 ```
 
 ### 6. Response Standardization
+
 - **Global Interceptor**: `ResponseInterceptor` wraps all responses in standard format
 - **Standard Format**:
   ```typescript
@@ -194,10 +214,11 @@ export class UserController {
 - **Error Handling**: `HttpExceptionFilter` handles errors uniformly
 
 ### 7. Pagination
+
 - **Standard DTO**: Use `PaginationQueryDto` for all paginated endpoints
 - **Utility Function**: Use `paginateQuery()` helper for database queries
 - **Response Format**: Return `PaginatedResponseEntity<T>` with meta information
-- **Constants**: 
+- **Constants**:
   - Default page: 1
   - Default limit: 10
   - Max limit: 100
@@ -205,6 +226,7 @@ export class UserController {
 ## Module Development Guidelines
 
 ### 1. Creating New Modules
+
 1. **Generate Structure**: Follow the established module pattern
 2. **Database Schema**: Create in `schema/` directory with proper TypeScript types
 3. **Providers**: Set up database providers for dependency injection
@@ -215,6 +237,7 @@ export class UserController {
 8. **Module**: Wire everything together and export
 
 ### 2. Database Operations
+
 - **Create Operations**: Always hash passwords, validate uniqueness
 - **Read Operations**: Use entities for public API responses
 - **Update Operations**: Validate changes and handle partial updates
@@ -222,18 +245,21 @@ export class UserController {
 - **Queries**: Use proper indexing and optimize for performance
 
 ### 3. Authentication & Authorization
+
 - **JWT Strategy**: Use @nestjs/jwt for token management
 - **Password Security**: Always use bcrypt for hashing
 - **Validation**: Implement strong password requirements
 - **Refresh Tokens**: Implement proper token refresh mechanism
 
 ### 4. Error Handling
+
 - **Global Filter**: `HttpExceptionFilter` handles all exceptions
 - **Standard Errors**: Use NestJS built-in HTTP exceptions
 - **Error Messages**: Provide clear, user-friendly messages
 - **Validation Errors**: Let class-validator handle input validation
 
 ### 5. Configuration
+
 - **Environment**: Use `@nestjs/config` for all configuration
 - **Global Config**: Make config module global in root module
 - **Type Safety**: Create interfaces for configuration objects
@@ -241,22 +267,26 @@ export class UserController {
 ## Development Best Practices
 
 ### 1. Code Quality
+
 - **ESLint**: Follow configured rules strictly
 - **Prettier**: Use for consistent code formatting
 - **TypeScript**: Enable strict mode settings
 - **Imports**: Use absolute imports when possible
 
 ### 2. Testing Strategy
+
 - **Note**: Currently no test runner configured
 - **Future**: Plan to implement Jest-based testing
 
 ### 3. Security
+
 - **CORS**: Configured for development (localhost:3000)
 - **Validation**: Global ValidationPipe with strict options
 - **Headers**: Proper security headers configuration
 - **Passwords**: Never expose in API responses
 
 ### 4. Performance
+
 - **Database**: Use proper indexing and query optimization
 - **Serialization**: Use class-transformer for efficient object transformation
 - **Pagination**: Implement for all list endpoints
@@ -266,20 +296,25 @@ export class UserController {
 
 ```bash
 # Development
-npm run start:dev          # Start in watch mode
-npm run build             # Build for production
-npm run start:prod        # Run production build
+yarn start:dev          # Start in watch mode
+yarn build             # Build for production
+yarn start:prod        # Run production build
 
 # Database
-npm run seed              # Run database seeds
+yarn seed              # Run database seeds
 
 # Code Quality
-npm run lint              # Run ESLint
-npm run format            # Run Prettier
+yarn lint              # Run ESLint
+yarn format            # Run Prettier
+
+# install packages
+yarn install
 ```
 
 ## Environment Variables
+
 Ensure these are properly configured in `.env`:
+
 - `PORT`: Application port (default: 3000)
 - `DATABASE_URL`: MongoDB connection string
 - `JWT_SECRET`: Secret for JWT signing

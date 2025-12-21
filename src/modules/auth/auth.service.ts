@@ -10,9 +10,9 @@ import { plainToInstance } from 'class-transformer';
 
 import { UserService } from '../users/user.service';
 import { RoleService } from '../roles/role.service';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseEntity } from './entities/auth.entity';
+import { UserDocument } from '../users/schema/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -37,25 +37,21 @@ export class AuthService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async signIn(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-
-    const userDoc = await this.userService.findByEmail(email);
-
-    if (!userDoc) {
-      throw new UnauthorizedException('Invalid email or password');
+  async validateUser(email: string, pass: string): Promise<any> {
+    const user = await this.userService.findByEmail(email);
+    if (user && (await this.comparePasswords(pass, user.password))) {
+      const userObj = user.toObject() as Record<string, any>;
+      delete userObj.password;
+      return userObj;
     }
+    return null;
+  }
 
-    const isPasswordValid = await this.comparePasswords(
-      password,
-      userDoc.password,
-    );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    const payload = { sub: userDoc._id.toString(), email: userDoc.email };
+  async signIn(user: UserDocument) {
+    const payload = {
+      sub: user._id.toString(),
+      email: user.email,
+    };
 
     const accessToken = await this.jwtService.signAsync({
       ...payload,
@@ -137,6 +133,9 @@ export class AuthService {
     if (!userDoc) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    const user = userDoc.toObject() as Record<string, any>;
+    delete user.password;
 
     const newPayload = {
       sub: userDoc._id.toString(),
