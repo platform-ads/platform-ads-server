@@ -1,27 +1,6 @@
 import { SetMetadata, Type } from '@nestjs/common';
 import { ClassTransformOptions } from 'class-transformer';
 
-import { RESPONSE_MESSAGE_KEY, SKIP_TRANSFORM_KEY } from '../response.types';
-
-/**
- * Custom decorator to set message for response
- * @example
- * @ResponseMessage('User created successfully')
- * @Post()
- * createUser() { ... }
- */
-export const ResponseMessage = (message: string) =>
-  SetMetadata(RESPONSE_MESSAGE_KEY, message);
-
-/**
- * Skip response transformation (returns raw data, but still applies serialization)
- * @example
- * @SkipTransform()
- * @Get('file')
- * downloadFile() { ... }
- */
-export const SkipTransform = () => SetMetadata(SKIP_TRANSFORM_KEY, true);
-
 /**
  * Decorator to define entity class for serialization
  * Use instead of returning entity instance from controller

@@ -2,7 +2,6 @@ import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
 
 import { ResponseMessage } from '../../common/http/decorators';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -16,7 +15,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ResponseMessage('Login successfully')
-  login(@Request() req: { user: any }, @Body() _loginDto: LoginDto) {
+  login(@Request() req: { user: any }) {
     return this.authService.signIn(req.user as UserDocument);
   }
 

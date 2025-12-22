@@ -1,5 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import mongoose, { Model } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
 
 import { UserDocument } from './schema/user.schema';
@@ -32,11 +32,17 @@ export class UserService {
     });
   }
 
-  async findById(id: string): Promise<UserEntity | null> {
-    const user = await this.userModel.findById(id).exec();
+  async findById(id: string): Promise<UserEntity> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new NotFoundException(`Invalid user ID format: ${id}`);
+    }
+
+    const user = await this.userModel
+      .findById(new mongoose.Types.ObjectId(id))
+      .exec();
 
     if (!user) {
-      return null;
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     return plainToInstance(UserEntity, user.toObject(), {

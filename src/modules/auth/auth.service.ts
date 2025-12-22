@@ -51,6 +51,7 @@ export class AuthService {
     const payload = {
       sub: user._id.toString(),
       email: user.email,
+      roles: user.roles.map((r) => r.name),
     };
 
     const accessToken = await this.jwtService.signAsync({
@@ -68,7 +69,7 @@ export class AuthService {
 
     return plainToInstance(
       LoginResponseEntity,
-      { accessToken, refreshToken },
+      { accessToken, refreshToken, user: user.toObject() },
       { excludeExtraneousValues: true },
     );
   }
@@ -140,6 +141,7 @@ export class AuthService {
     const newPayload = {
       sub: userDoc._id.toString(),
       email: userDoc.email,
+      roles: userDoc.roles.map((r) => r.name),
     };
 
     const accessToken = await this.jwtService.signAsync({
@@ -157,7 +159,7 @@ export class AuthService {
 
     return plainToInstance(
       LoginResponseEntity,
-      { accessToken, refreshToken },
+      { accessToken, refreshToken, user },
       { excludeExtraneousValues: true },
     );
   }
