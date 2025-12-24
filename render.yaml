@@ -10,6 +10,16 @@ projects:
       repo: https://github.com/platform-ads/platform-ads-server
       plan: free
       envVars:
+      - key: CLOUDFLARE_R2_URL
+        sync: false
+      - key: CLOUDFLARE_R2_ENDPOINT
+        sync: false
+      - key: CLOUDFLARE_R2_BUCKET
+        sync: false
+      - key: CLOUDFLARE_R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: CLOUDFLARE_R2_ACCESS_KEY_ID
+        sync: false
       - key: JWT_REFRESH_EXPIRES_IN
         sync: false
       - key: JWT_EXPIRES_IN
