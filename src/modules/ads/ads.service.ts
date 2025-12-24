@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 
 import { AdsDocument } from './schemas/ads.schema';
 import { CreateAdsDto } from './dto/create-ads.dto';
+import { UpdateAdsDto } from './dto/update-ads.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { PaginationOptions } from 'src/common/http';
 import { PaginatedResponseEntity } from 'src/common/entities';
@@ -118,6 +119,86 @@ export class AdsService {
     return new PaginatedResponseEntity({
       items: ads,
       meta: result.meta,
+    });
+  }
+
+  async updateAd(
+    id: string,
+    updateAdsDto: UpdateAdsDto,
+    files?: {
+      imageUrl?: Express.Multer.File[];
+      videoUrl?: Express.Multer.File[];
+    },
+  ): Promise<AdsEntity> {
+    const ad = await this.adsModel.findById(id);
+    if (!ad) {
+      throw new NotFoundException(`Ad with ID ${id} not found`);
+    }
+
+    if (updateAdsDto.title && updateAdsDto.title !== ad.title) {
+      const adsExists = await this.existsAdsByTitle(updateAdsDto.title);
+      if (adsExists) {
+        throw new ConflictException(`Title already in use.`);
+      }
+    }
+
+    if (files?.imageUrl?.[0]) {
+      if (ad.imageUrl) {
+        const oldImageKey = this.storageService.extractKeyFromUrl(ad.imageUrl);
+        await this.storageService.deleteFile(oldImageKey).catch((err) => {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Unknown error';
+          this.logger.error(`Failed to delete old image: ${errorMessage}`);
+        });
+      }
+
+      const imageFile = files.imageUrl[0];
+      const fileName = generateCleanFilename(imageFile.originalname);
+      const imageKey = `ads/images/${fileName}`;
+      updateAdsDto.imageUrl = await this.storageService.uploadFile(
+        imageFile.buffer,
+        imageKey,
+        imageFile.mimetype,
+      );
+    }
+
+    if (files?.videoUrl?.[0]) {
+      if (ad.videoUrl) {
+        const oldVideoKey = this.storageService.extractKeyFromUrl(ad.videoUrl);
+        await this.storageService.deleteFile(oldVideoKey).catch((err) => {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Unknown error';
+          this.logger.error(`Failed to delete old video: ${errorMessage}`);
+        });
+      }
+
+      const videoFile = files.videoUrl[0];
+      const fileName = generateCleanFilename(videoFile.originalname);
+      const videoKey = `ads/videos/${fileName}`;
+      updateAdsDto.videoUrl = await this.storageService.uploadFile(
+        videoFile.buffer,
+        videoKey,
+        videoFile.mimetype,
+      );
+    }
+
+    Object.assign(ad, updateAdsDto);
+    const updatedAd = await ad.save();
+
+    return plainToInstance(AdsEntity, updatedAd.toObject(), {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async findById(id: string): Promise<AdsEntity> {
+    const ad = await this.adsModel.findById(id).exec();
+
+    if (!ad) {
+      throw new NotFoundException(`Ad with ID ${id} not found`);
+    }
+
+    return plainToInstance(AdsEntity, ad.toObject(), {
+      excludeExtraneousValues: true,
     });
   }
 }

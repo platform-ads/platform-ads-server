@@ -1,6 +1,16 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
+import * as mongoose from 'mongoose';
+
+// Set global trim for all String fields in Mongoose
+mongoose.Schema.Types.String.set('trim', true);
+
+// Apply global settings to all schemas
+mongoose.plugin((schema: mongoose.Schema) => {
+  schema.set('versionKey', false);
+  schema.set('timestamps', true);
+});
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/http/http-exception.filter';

@@ -1,18 +1,13 @@
 import mongoose, { Document } from 'mongoose';
 
-export const AdsSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true, unique: true },
-    description: { type: String, required: true },
-    imageUrl: { type: String, required: true },
-    videoUrl: { type: String, required: true },
-    point: { type: Number, required: true },
-    duration: { type: Number, required: true },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-  },
-  { versionKey: false },
-);
+export const AdsSchema = new mongoose.Schema({
+  title: { type: String, required: true, unique: true },
+  description: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+  videoUrl: { type: String, required: true },
+  point: { type: Number, required: true },
+  duration: { type: Number, required: true },
+});
 
 export type AdsDocument = Document & {
   title: string;
