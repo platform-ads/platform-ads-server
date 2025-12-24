@@ -1,6 +1,6 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
-export class UserRoleEntity {
+export class AdsTransform {
   @Expose()
   @Transform(({ obj }) => {
     const source = obj as { _id?: unknown; id?: unknown };
@@ -10,10 +10,25 @@ export class UserRoleEntity {
   _id: string;
 
   @Expose()
-  name: string;
+  title: string;
+
+  @Expose()
+  description: string;
+
+  @Expose()
+  imageUrl: string;
+
+  @Expose()
+  videoUrl: string;
+
+  @Expose()
+  point: number;
+
+  @Expose()
+  duration: number;
 }
 
-export class UserEntity {
+export class AdsEntity {
   @Expose()
   @Transform(({ obj }) => {
     const source = obj as { _id?: unknown; id?: unknown };
@@ -23,27 +38,30 @@ export class UserEntity {
   _id: string;
 
   @Expose()
-  username: string;
+  title: string;
 
   @Expose()
-  email: string;
+  description: string;
 
   @Expose()
-  phoneNumber: string;
-
-  @Exclude()
-  password: string;
+  imageUrl: string;
 
   @Expose()
-  @Type(() => UserRoleEntity)
-  roles: UserRoleEntity[];
+  videoUrl: string;
 
   @Expose()
-  avatarUrl?: string;
+  point: number;
+
+  @Expose()
+  duration: number;
 
   @Expose()
   createdAt: Date;
 
   @Expose()
   updatedAt: Date;
+
+  constructor(partial: Partial<AdsEntity>) {
+    Object.assign(this, partial);
+  }
 }

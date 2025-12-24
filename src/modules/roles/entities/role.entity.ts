@@ -1,8 +1,11 @@
 import { Expose, Transform } from 'class-transformer';
 
 export class RoleTransform {
-  @Expose()
-  @Transform(({ value }: { value: unknown }) => value?.toString())
+  @Transform(({ obj }) => {
+    const source = obj as { _id?: unknown; id?: unknown };
+    const id = source._id ?? source.id;
+    return id?.toString();
+  })
   _id: string;
 
   @Expose()

@@ -19,6 +19,7 @@ export const databaseProviders: AppProvider[] = [
       if (!mongoDbName) {
         throw new Error('Missing required env var: MONGODB_DB_NAME');
       }
+
       return mongoose.connect(mongoUri, { dbName: mongoDbName });
     },
   },

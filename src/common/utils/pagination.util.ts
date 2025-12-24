@@ -9,8 +9,6 @@ import {
   PaginationOptions,
 } from '../http/response.types';
 
-type QueryFilter<T> = mongoose.QueryFilter<T>;
-
 export function buildPaginationMeta(
   page: number,
   limit: number,
@@ -29,13 +27,13 @@ export function buildPaginationMeta(
 }
 
 export function normalizePaginationOptions(
-  options: PaginationOptions,
+  options: PaginationOptions = {},
 ): Required<PaginationOptions> {
-  let page = options.page ?? DEFAULT_PAGE;
-  let limit = options.limit ?? DEFAULT_LIMIT;
-
-  page = Math.max(1, Math.floor(page));
-  limit = Math.max(1, Math.min(MAX_LIMIT, Math.floor(limit)));
+  const page = Math.max(1, Math.floor(Number(options?.page) || DEFAULT_PAGE));
+  const limit = Math.max(
+    1,
+    Math.min(MAX_LIMIT, Math.floor(Number(options?.limit) || DEFAULT_LIMIT)),
+  );
 
   return { page, limit };
 }
@@ -46,28 +44,19 @@ export function calculateSkip(page: number, limit: number): number {
 
 export async function paginateQuery<T>(
   model: Model<T>,
-  filter: QueryFilter<T>,
+  filter: mongoose.QueryFilter<T>,
   paginationOptions: PaginationOptions,
   queryOptions: QueryOptions = {},
-  populate?: string | string[] | { path: string; select?: string }[],
+  populate?: any,
 ): Promise<PaginatedData<T>> {
   const { page, limit } = normalizePaginationOptions(paginationOptions);
   const skip = calculateSkip(page, limit);
 
-  let query = model.find(filter, null, queryOptions).skip(skip).limit(limit);
+  const query = model.find(filter, null, { ...queryOptions, skip, limit });
 
   if (populate) {
-    if (Array.isArray(populate)) {
-      for (const p of populate) {
-        if (typeof p === 'string') {
-          query = query.populate(p);
-        } else {
-          query = query.populate(p as mongoose.PopulateOptions);
-        }
-      }
-    } else {
-      query = query.populate(populate);
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    query.populate(populate);
   }
 
   const [items, totalItems] = await Promise.all([
