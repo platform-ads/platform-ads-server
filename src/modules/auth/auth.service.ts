@@ -37,12 +37,13 @@ export class AuthService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<UserDocument | null> {
     const user = await this.userService.findByEmail(email);
     if (user && (await this.comparePasswords(pass, user.password))) {
-      const userObj = user.toObject() as Record<string, any>;
-      delete userObj.password;
-      return userObj;
+      return user;
     }
     return null;
   }
@@ -69,7 +70,10 @@ export class AuthService {
 
     return plainToInstance(
       LoginResponseEntity,
-      { accessToken, refreshToken, user: user.toObject() },
+      {
+        accessToken,
+        refreshToken,
+      },
       { excludeExtraneousValues: true },
     );
   }
@@ -159,7 +163,7 @@ export class AuthService {
 
     return plainToInstance(
       LoginResponseEntity,
-      { accessToken, refreshToken, user },
+      { accessToken, refreshToken },
       { excludeExtraneousValues: true },
     );
   }
