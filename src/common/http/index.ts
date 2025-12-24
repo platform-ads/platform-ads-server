@@ -9,3 +9,4 @@ export * from './response.types';
 
 // Decorators
 export * from './decorators';
+export * from './decorators';

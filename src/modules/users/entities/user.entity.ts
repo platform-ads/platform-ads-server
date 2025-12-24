@@ -2,7 +2,14 @@ import { Exclude, Expose, Transform, Type } from 'class-transformer';
 
 export class UserRoleEntity {
   @Expose()
-  @Transform(({ value }: { value: unknown }) => value?.toString())
+  @Transform(({ obj }) => {
+    const source = obj as { _id?: unknown; id?: unknown };
+    const id = (source._id ?? source.id) as
+      | { toString(): string }
+      | string
+      | undefined;
+    return id?.toString();
+  })
   _id: string;
 
   @Expose()
@@ -11,7 +18,14 @@ export class UserRoleEntity {
 
 export class UserEntity {
   @Expose()
-  @Transform(({ value }: { value: unknown }) => value?.toString())
+  @Transform(({ obj }) => {
+    const source = obj as { _id?: unknown; id?: unknown };
+    const id = (source._id ?? source.id) as
+      | { toString(): string }
+      | string
+      | undefined;
+    return id?.toString();
+  })
   _id: string;
 
   @Expose()
@@ -38,8 +52,4 @@ export class UserEntity {
 
   @Expose()
   updatedAt: Date;
-
-  constructor(partial: Partial<UserEntity>) {
-    Object.assign(this, partial);
-  }
 }

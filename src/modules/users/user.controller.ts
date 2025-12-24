@@ -1,24 +1,27 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { IsMongoId } from 'class-validator';
-import { ResponseMessage } from 'src/common/http';
+import { Controller, Get, Query, UseGuards, Param } from '@nestjs/common';
+import { ResponseMessage, Roles } from 'src/common/http';
 
 import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 import { UserService } from './user.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @Roles('admin')
   @ResponseMessage('Users retrieved successfully')
   getUsers(@Query() paginationQuery: PaginationQueryDto) {
     return this.userService.findAll(paginationQuery);
   }
 
-  @Get('by-id')
-  @IsMongoId()
+  @Get(':id')
+  @Roles('admin', 'user')
   @ResponseMessage('User retrieved successfully')
-  getUserById(@Query('id') id: string) {
+  getUserById(@Param('id') id: string) {
     return this.userService.findById(id);
   }
 }
