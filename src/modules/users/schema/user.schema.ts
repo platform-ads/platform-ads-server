@@ -7,7 +7,11 @@ export const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   roles: [
     {
-      _id: { type: mongoose.Schema.Types.ObjectId, required: true },
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'roles',
+        required: true,
+      },
       name: { type: String, required: true },
     },
   ],
