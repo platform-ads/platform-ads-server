@@ -15,8 +15,8 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
-import { CreateAdsDto } from './dto/create-ads.dto';
-import { UpdateAdsDto } from './dto/update-ads.dto';
+import { CreateAdsDto } from './dto/create.ads.dto';
+import { UpdateAdsDto } from './dto/update.ads.dto';
 import { AdsService } from './ads.service';
 import { ResponseMessage, Roles } from 'src/common/http';
 import { PaginationQueryDto } from 'src/common/dto/pagination.dto';

@@ -2,8 +2,12 @@ import { ConfigService } from '@nestjs/config';
 import mongoose from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
-import { UserSchema } from 'src/modules/users/schema/user.schema';
+import { UserSchema, UserDocument } from 'src/modules/users/schema/user.schema';
 import { RoleSchema } from 'src/modules/roles/schema/role.schema';
+import {
+  PointBalanceSchema,
+  PointHistorySchema,
+} from 'src/modules/point/schema/point.schema';
 
 type UserSeedData = {
   username: string;
@@ -46,8 +50,8 @@ export async function seedUsers(
     return;
   }
 
-  const RoleModel = connection.model('Role', RoleSchema);
-  const UserModel = connection.model('User', UserSchema);
+  const RoleModel = connection.model('roles', RoleSchema);
+  const UserModel = connection.model<UserDocument>('users', UserSchema);
 
   const adminRole = await RoleModel.findOne({ name: 'admin' });
   if (!adminRole) {
@@ -56,18 +60,58 @@ export async function seedUsers(
     );
   }
 
-  const existing = await UserModel.exists({
+  const existing = await UserModel.findOne({
     $or: [{ username: adminUser.username }, { email: adminUser.email }],
   });
+
+  const PointBalanceModel = connection.model(
+    'PointBalance',
+    PointBalanceSchema,
+  );
+  const PointHistoryModel = connection.model(
+    'PointHistory',
+    PointHistorySchema,
+  );
+
   if (existing) {
+    const hasBalance = await PointBalanceModel.exists({ userId: existing._id });
+    if (!hasBalance) {
+      await PointBalanceModel.create({
+        userId: existing._id,
+        balance: 99999,
+      });
+
+      await PointHistoryModel.create({
+        userId: existing._id,
+        amount: 99999,
+        balanceBefore: 0,
+        balanceAfter: 99999,
+        description: 'Initial admin points',
+        type: 'ADMIN-BONUS',
+      });
+    }
     return;
   }
 
   const hashedPassword = await bcrypt.hash(adminUser.password, 10);
 
-  await UserModel.create({
+  const createdAdmin = await UserModel.create({
     ...adminUser,
     password: hashedPassword,
     roles: [{ _id: adminRole._id, name: adminRole.name }],
+  });
+
+  await PointBalanceModel.create({
+    userId: createdAdmin._id,
+    balance: 99999,
+  });
+
+  await PointHistoryModel.create({
+    userId: createdAdmin._id,
+    amount: 99999,
+    balanceBefore: 0,
+    balanceAfter: 99999,
+    description: 'Initial admin points',
+    type: 'ADMIN-BONUS',
   });
 }

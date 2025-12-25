@@ -2,14 +2,13 @@ import {
   ConflictException,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Model } from 'mongoose';
 
 import { AdsDocument } from './schemas/ads.schema';
-import { CreateAdsDto } from './dto/create-ads.dto';
-import { UpdateAdsDto } from './dto/update-ads.dto';
+import { CreateAdsDto } from './dto/create.ads.dto';
+import { UpdateAdsDto } from './dto/update.ads.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { PaginationOptions } from 'src/common/http';
 import { PaginatedResponseEntity } from 'src/common/entities';
@@ -20,8 +19,6 @@ import { generateCleanFilename } from 'src/common/utils/string.util';
 
 @Injectable()
 export class AdsService {
-  private readonly logger = new Logger(AdsService.name);
-
   constructor(
     @Inject('ADS_MODEL')
     private readonly adsModel: Model<AdsDocument>,
@@ -87,18 +84,14 @@ export class AdsService {
     if (ad.imageUrl) {
       const imageKey = this.storageService.extractKeyFromUrl(ad.imageUrl);
       await this.storageService.deleteFile(imageKey).catch((err) => {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error';
-        this.logger.error(`Failed to delete image from R2: ${errorMessage}`);
+        console.log(err);
       });
     }
 
     if (ad.videoUrl) {
       const videoKey = this.storageService.extractKeyFromUrl(ad.videoUrl);
       await this.storageService.deleteFile(videoKey).catch((err) => {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error';
-        this.logger.error(`Failed to delete video from R2: ${errorMessage}`);
+        console.log(err);
       });
     }
 
@@ -146,9 +139,7 @@ export class AdsService {
       if (ad.imageUrl) {
         const oldImageKey = this.storageService.extractKeyFromUrl(ad.imageUrl);
         await this.storageService.deleteFile(oldImageKey).catch((err) => {
-          const errorMessage =
-            err instanceof Error ? err.message : 'Unknown error';
-          this.logger.error(`Failed to delete old image: ${errorMessage}`);
+          console.log(err);
         });
       }
 
@@ -166,9 +157,7 @@ export class AdsService {
       if (ad.videoUrl) {
         const oldVideoKey = this.storageService.extractKeyFromUrl(ad.videoUrl);
         await this.storageService.deleteFile(oldVideoKey).catch((err) => {
-          const errorMessage =
-            err instanceof Error ? err.message : 'Unknown error';
-          this.logger.error(`Failed to delete old video: ${errorMessage}`);
+          console.log(err);
         });
       }
 
